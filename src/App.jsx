@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 const gallery = Array.from({ length: 16 }, (_, index) => ({
@@ -8,10 +8,10 @@ const gallery = Array.from({ length: 16 }, (_, index) => ({
 }))
 
 const navigation = [
-  { label: 'Home', href: '#home' },
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Gallery', href: '#gallery' },
+  { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
+  { label: 'Services', href: '/services' },
+  { label: 'Gallery', href: '/gallery' },
 ]
 
 const services = [
@@ -53,11 +53,35 @@ const bookingSteps = [
 function App() {
   const [selectedImage, setSelectedImage] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [page, setPage] = useState(window.location.pathname.replace(/\/$/, '') || '/')
+  useEffect(() => {
+    const onPopState = () => setPage(window.location.pathname.replace(/\/$/, '') || '/')
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+  useEffect(() => {
+    const titles = { '/': 'Home', '/about': 'About Giovanni', '/services': 'Services', '/gallery': 'Gallery', '/book': 'Book Now' }
+    document.title = `${titles[page] || 'Page Not Found'} | City View Cuts`
+  }, [page])
+  const navigate = (event) => {
+    const anchor = event.target.closest('a[href^="/"]')
+    if (!anchor || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+    event.preventDefault()
+    const path = anchor.getAttribute('href')
+    if (path !== page) {
+      window.history.pushState({}, '', path)
+      setPage(path)
+      setSelectedImage(null)
+      window.scrollTo(0, 0)
+    }
+    setMenuOpen(false)
+  }
+
 
   return (
-    <div className="website">
+    <div className="website" onClick={navigate}>
       <header className="site-header">
-        <a className="brand" href="#home" onClick={() => setMenuOpen(false)}>
+        <a className="brand" href="/" onClick={() => setMenuOpen(false)}>
           <img className="brand-logo" src="/images/branding/city-view-cuts-logo.jpeg" alt="City View Cuts logo" />
           <span className="brand-text">
             <span className="brand-name">CITY VIEW CUTS</span>
@@ -69,14 +93,14 @@ function App() {
         </button>
         <nav className={menuOpen ? 'navigation open' : 'navigation'}>
           {navigation.map((item) => (
-            <a key={item.label} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
+            <a key={item.label} href={item.href} aria-current={page === item.href ? 'page' : undefined} onClick={() => setMenuOpen(false)}>{item.label}</a>
           ))}
-          <a className="nav-book-button" href="#book-now" onClick={() => setMenuOpen(false)}>BOOK NOW</a>
+          <a className="nav-book-button" href="/book" onClick={() => setMenuOpen(false)}>BOOK NOW</a>
         </nav>
       </header>
 
       <main>
-        <section className="hero" id="home">
+        {page === '/' && <section className="hero" id="home">
           <div className="hero-background"></div>
           <div className="hero-shade"></div>
           <div className="hero-content">
@@ -84,8 +108,8 @@ function App() {
             <h1>YOUR BARBER.<br />YOUR SPACE.<br /><em>YOUR EXPERIENCE.</em></h1>
             <p className="hero-description">Elevating men's grooming with a personalized barber experience delivered to the comfort of your own space.</p>
             <div className="hero-actions">
-              <a className="primary-button" href="#book-now">BOOK YOUR EXPERIENCE <span>→</span></a>
-              <a className="secondary-button" href="#gallery">EXPLORE THE WORK <span>→</span></a>
+              <a className="primary-button" href="/book">BOOK YOUR EXPERIENCE <span>→</span></a>
+              <a className="secondary-button" href="/gallery">EXPLORE THE WORK <span>→</span></a>
             </div>
             <div className="hero-features">
               <div className="hero-feature"><span className="feature-icon">⌖</span><span>PRIVATE<br />GROOMING</span></div>
@@ -94,9 +118,9 @@ function App() {
             </div>
             <p className="hero-tagline">STYLE · CONFIDENCE · ON YOUR TERMS</p>
           </div>
-        </section>
+        </section>}
 
-        <section className="about-section section" id="about">
+        {page === '/about' && <section className="about-section section" id="about">
           <div className="about-layout">
             <div className="about-image-column">
               <div className="about-image-frame">
@@ -116,12 +140,12 @@ function App() {
                 <div className="about-highlight"><strong>PRIVATE</strong><span>GROOMING</span></div>
                 <div className="about-highlight"><strong>JERSEY CITY</strong><span>& SURROUNDING AREAS</span></div>
               </div>
-              <a className="primary-button about-button" href="#book-now">BOOK WITH GIOVANNI <span>→</span></a>
+              <a className="primary-button about-button" href="/book">BOOK WITH GIOVANNI <span>→</span></a>
             </div>
           </div>
-        </section>
+        </section>}
 
-        <section className="services-section section" id="services">
+        {page === '/services' && <section className="services-section section" id="services">
           <div className="services-heading">
             <p className="section-label">02 / THE EXPERIENCE</p>
             <h2>EXCEPTIONAL GROOMING.<br /><em>ON YOUR TERMS.</em></h2>
@@ -142,7 +166,7 @@ function App() {
                     <span>{service.priceLabel}</span>
                     <strong>{service.price}</strong>
                   </div>
-                  <a href="#book-now">INQUIRE NOW <span>↗</span></a>
+                  <a href="/book">INQUIRE NOW <span>↗</span></a>
                 </div>
               </article>
             ))}
@@ -151,9 +175,9 @@ function App() {
             <span className="pricing-note-icon">✦</span>
             <p>Regular haircuts start at $100 and include a lineup. Beard grooming is an additional charge. Final pricing may vary based on haircut complexity and travel distance. All pricing is confirmed before your appointment.</p>
           </div>
-        </section>
+        </section>}
 
-        <section className="gallery-section section" id="gallery">
+        {page === '/gallery' && <section className="gallery-section section" id="gallery">
           <div className="gallery-heading">
             <div><p className="section-label">03 / THE PORTFOLIO</p><h2>THE ART OF<br /><em>THE CUT.</em></h2></div>
             <p>Every detail matters. Explore real work, real clients, and the craftsmanship behind City View Cuts.</p>
@@ -166,9 +190,9 @@ function App() {
               </button>
             ))}
           </div>
-        </section>
+        </section>}
 
-        <section className="booking-section section" id="book-now">
+        {page === '/book' && <section className="booking-section section" id="book-now">
           <div className="booking-inner">
             <p className="section-label">04 / PRIVATE APPOINTMENTS</p>
             <h2>YOUR STYLE.<br /><em>YOUR SCHEDULE.</em></h2>
@@ -194,7 +218,8 @@ function App() {
               <p className="booking-confirmation">Appointments are confirmed directly by Giovanni. Sending a message does not guarantee a booking.</p>
             </div>
           </div>
-        </section>
+        </section>}
+        {!['/', '/about', '/services', '/gallery', '/book'].includes(page) && <section className="section" style={{ minHeight: '60vh', textAlign: 'center' }}><h2>PAGE NOT FOUND</h2><a className="primary-button" href="/">BACK TO HOME →</a></section>}
       </main>
 
       <footer className="site-footer">
